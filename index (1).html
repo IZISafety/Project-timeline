@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Project Timeline</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #ffffff;
+      color: #1a1a1a;
+      padding: 40px;
+      min-height: 100vh;
+    }
+    .wrap { max-width: 860px; margin: 0 auto; }
+    .header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 24px; }
+    .title { font-size: 16px; font-weight: 500; color: #1a1a1a; }
+    .subtitle { font-size: 12px; color: #888; }
+    .chart { position: relative; }
+    .month-row { display: flex; border-bottom: 0.5px solid #e0e0e0; padding-bottom: 8px; margin-bottom: 6px; }
+    .month-cell { flex: 1; font-size: 11px; color: #999; text-align: center; letter-spacing: 0.03em; }
+    .phase-row { display: flex; align-items: center; height: 36px; margin-bottom: 6px; cursor: pointer; }
+    .phase-row:hover .bar { filter: brightness(1.08); }
+    .bar-area { flex: 1; position: relative; height: 100%; }
+    .bar {
+      position: absolute;
+      top: 50%; transform: translateY(-50%);
+      height: 26px;
+      border-radius: 6px;
+      display: flex; align-items: center; padding: 0 10px;
+      font-size: 12px; font-weight: 500;
+      color: #fff;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+    }
+    .bar .weeks {
+      margin-left: auto;
+      padding-left: 10px;
+      font-size: 11px;
+      font-weight: 400;
+      opacity: 0.75;
+    }
+    .grid-line {
+      position: absolute; top: 0; bottom: 0;
+      width: 0.5px; background: #ebebeb;
+      pointer-events: none;
+    }
+    .tooltip {
+      position: fixed;
+      background: #fff;
+      border: 0.5px solid #ccc;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 12px;
+      color: #1a1a1a;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+      z-index: 9999;
+      min-width: 180px;
+      max-width: 240px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    .tooltip.show { opacity: 1; }
+    .tooltip .t-name { font-weight: 500; margin-bottom: 4px; font-size: 13px; }
+    .tooltip .t-detail { color: #888; margin-bottom: 6px; }
+    .tooltip .t-desc {
+      color: #444;
+      font-size: 12px;
+      line-height: 1.5;
+      border-top: 0.5px solid #ebebeb;
+      padding-top: 6px;
+    }
+    .date-label { font-size: 11px; color: #bbb; }
+    .footer { display: flex; justify-content: space-between; margin-top: 10px; padding-top: 8px; border-top: 0.5px solid #ebebeb; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <span class="title">Project timeline</span>
+    <span class="subtitle">01/04/2026 — 31/12/2026</span>
+  </div>
+  <div class="chart" id="chart">
+    <div class="month-row" id="month-row"></div>
+    <div id="phases"></div>
+    <div class="footer">
+      <span class="date-label">April 2026</span>
+      <span class="date-label">December 2026</span>
+    </div>
+  </div>
+</div>
+
+<div class="tooltip" id="tooltip">
+  <div class="t-name" id="tt-name"></div>
+  <div class="t-detail" id="tt-detail"></div>
+  <div class="t-desc" id="tt-desc"></div>
+</div>
+
+<script>
+const months = ['Avril','Mai','Juin','Juillet','Août','Sept.','Oct.','Nov','Déc.'];
+const TOTAL = 9;
+
+// ✏️ EDIT HERE — fill in the desc field for each phase
+const phases = [
+  { name: 'AFO (8)',  start: 0,    dur: 1.5, weeks: 5,  color: '#1a4a8a', desc: 'Ghana, Togo, Guinée Conakry, Cameroun, Sénégal, Côte d’ivoire, Gabon, Guinée Equatoriale' },
+  { name: 'MOI (8)',  start: 1.45,    dur: 1.5,    weeks: 5,  color: '#1e5aa8', desc: 'Tunisie, Maurice, Maroc, Algérie, Egypte, Ethiopie, Madagascar, Mozambique' },
+  { name: 'NG (1)',   start: 2.80,    dur: 0.62, weeks: 0.62,  color: '#2468c0', desc: 'Nigéria' },
+  { name: 'ACE (8)',  start: 3.25,  dur: 1.5,    weeks: 5,  color: '#2878d4', desc: 'Malawi, Zambie, RDC, Congo, Ouganda, Kenya, Tanzanie, Zimbabwe' },
+  { name: 'APMO (5)', start: 4.75, dur: 0.95,  weeks: 3.12,  color: '#2e88e8', desc: 'Cambodge, Fidji, Inde, Jordanie, Liban' },
+  { name: 'EOMC (7)', start: 5.65,    dur: 1.35, weeks: 4.37,  color: '#3498f0', desc: 'Caraïbes, Rep Dominicaine, Polynésie, Jamaïque, Mayotte, Porto Rico, Réunion' },
+  { name: 'LUB (6)',  start: 6.85,  dur: 1.15,  weeks: 3.75,  color: '#38a4f2', desc: 'Argentine, Brésil, Chili, Mexique, TEAFS, États-Unis' },
+  { name: 'ASNE (2)', start: 8,    dur: 0.90,  weeks: 1.25,  color: '#42b0f5', desc: 'Afrique du sud, Namibie' },
+];
+
+const monthRow = document.getElementById('month-row');
+months.forEach(m => {
+  const cell = document.createElement('div');
+  cell.className = 'month-cell';
+  cell.textContent = m;
+  monthRow.appendChild(cell);
+});
+
+const container = document.getElementById('phases');
+const tooltip = document.getElementById('tooltip');
+
+phases.forEach(p => {
+  const row = document.createElement('div');
+  row.className = 'phase-row';
+
+  const area = document.createElement('div');
+  area.className = 'bar-area';
+
+  for (let i = 0; i <= TOTAL; i++) {
+    const gl = document.createElement('div');
+    gl.className = 'grid-line';
+    gl.style.left = (i / TOTAL * 100) + '%';
+    area.appendChild(gl);
+  }
+
+  const bar = document.createElement('div');
+  bar.className = 'bar';
+  bar.style.left = (p.start / TOTAL * 100) + '%';
+  bar.style.width = (p.dur / TOTAL * 100) + '%';
+  bar.style.background = p.color;
+
+  const label = document.createElement('span');
+  label.textContent = p.name;
+
+  const wk = document.createElement('span');
+  wk.className = 'weeks';
+  wk.textContent = p.weeks + 'w';
+
+  bar.appendChild(label);
+  if (p.dur >= 1) bar.appendChild(wk);
+
+  area.appendChild(bar);
+  row.appendChild(area);
+  container.appendChild(row);
+
+  row.addEventListener('mouseenter', () => {
+    const startMonth = months[Math.floor(p.start)];
+    const endMonth = months[Math.min(Math.floor(p.start + p.dur), TOTAL - 1)];
+    document.getElementById('tt-name').textContent = p.name;
+    document.getElementById('tt-detail').textContent = `${startMonth} → ${endMonth}  ·  ${p.weeks} weeks`;
+    document.getElementById('tt-desc').textContent = p.desc || '';
+    tooltip.classList.add('show');
+  });
+  row.addEventListener('mousemove', (e) => {
+    tooltip.style.left = (e.clientX + 14) + 'px';
+    tooltip.style.top = (e.clientY - 10) + 'px';
+  });
+  row.addEventListener('mouseleave', () => tooltip.classList.remove('show'));
+});
+</script>
+</body>
+</html>
