@@ -1,110 +1,288 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Project Timeline</title>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #ffffff;
-      color: #1a1a1a;
-      padding: 40px;
-      min-height: 100vh;
-    }
-    .wrap { max-width: 860px; margin: 0 auto; }
-    .header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 24px; }
-    .title { font-size: 16px; font-weight: 500; color: #1a1a1a; }
-    .subtitle { font-size: 12px; color: #888; }
-    .chart { position: relative; }
-    .month-row { display: flex; border-bottom: 0.5px solid #e0e0e0; padding-bottom: 8px; margin-bottom: 6px; }
-    .month-cell { flex: 1; font-size: 11px; color: #999; text-align: center; letter-spacing: 0.03em; }
-    .phase-row { display: flex; align-items: center; height: 36px; margin-bottom: 6px; cursor: pointer; }
-    .phase-row:hover .bar { filter: brightness(1.08); }
-    .bar-area { flex: 1; position: relative; height: 100%; }
-    .bar {
-      position: absolute;
-      top: 50%; transform: translateY(-50%);
-      height: 26px;
-      border-radius: 6px;
-      display: flex; align-items: center; padding: 0 10px;
-      font-size: 12px; font-weight: 500;
-      color: #fff;
-      white-space: nowrap;
-      transition: all 0.2s ease;
-    }
-    .bar .weeks {
-      margin-left: auto;
-      padding-left: 10px;
-      font-size: 11px;
-      font-weight: 400;
-      opacity: 0.75;
-    }
-    .grid-line {
-      position: absolute; top: 0; bottom: 0;
-      width: 0.5px; background: #ebebeb;
-      pointer-events: none;
-    }
-    .tooltip {
-      position: fixed;
-      background: #fff;
-      border: 0.5px solid #ccc;
-      border-radius: 8px;
-      padding: 10px 14px;
-      font-size: 12px;
-      color: #1a1a1a;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.15s;
-      z-index: 9999;
-      min-width: 180px;
-      max-width: 240px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    }
-    .tooltip.show { opacity: 1; }
-    .tooltip .t-name { font-weight: 500; margin-bottom: 4px; font-size: 13px; }
-    .tooltip .t-detail { color: #888; margin-bottom: 6px; }
-    .tooltip .t-desc {
-      color: #444;
-      font-size: 12px;
-      line-height: 1.5;
-      border-top: 0.5px solid #ebebeb;
-      padding-top: 6px;
-    }
-    .date-label { font-size: 11px; color: #bbb; }
-    .footer { display: flex; justify-content: space-between; margin-top: 10px; padding-top: 8px; border-top: 0.5px solid #ebebeb; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IZI Safety – Planning Tracker</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #f0f4f8; color: #1a1a2e; }
+
+  header {
+    background: linear-gradient(135deg, #1F3864, #2E5FA3);
+    color: white; padding: 20px 32px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  header h1 { font-size: 18px; font-weight: 700; }
+  header span { font-size: 12px; opacity: 0.8; }
+  .header-right { display: flex; align-items: center; gap: 16px; }
+
+  .lang-toggle { display: flex; border: 2px solid rgba(255,255,255,0.4); border-radius: 20px; overflow: hidden; }
+  .lang-btn { padding: 5px 14px; cursor: pointer; font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.6); background: transparent; transition: all 0.2s; border: none; }
+  .lang-btn.active { background: rgba(255,255,255,0.25); color: white; }
+  .lang-btn:hover { color: white; }
+
+  /* LOCK INDICATOR */
+  .lock-indicator {
+    display: flex; align-items: center; gap: 7px;
+    background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 20px; padding: 5px 14px; font-size: 12px; font-weight: 600;
+    cursor: default; user-select: none; transition: all 0.3s;
+  }
+  .lock-indicator.unlocked { background: rgba(112,173,71,0.25); border-color: rgba(112,173,71,0.5); color: #c8ffc0; }
+  .lock-icon { font-size: 13px; }
+
+  .tabs { display: flex; background: #1F3864; padding: 0 32px; }
+  .tab { padding: 12px 24px; cursor: pointer; color: rgba(255,255,255,0.6); font-size: 13px; font-weight: 600; border-bottom: 3px solid transparent; transition: all 0.2s; }
+  .tab.active { color: white; border-bottom-color: #F4B942; }
+  .tab:hover { color: white; }
+
+  .container { padding: 24px 32px; }
+
+  .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .card { background: white; border-radius: 8px; padding: 16px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); border-left: 4px solid #2E5FA3; }
+  .card .label { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+  .card .value { font-size: 28px; font-weight: 700; color: #1F3864; margin-top: 4px; }
+  .card.green { border-left-color: #70AD47; } .card.green .value { color: #4a7a2e; }
+  .card.orange { border-left-color: #F4B942; } .card.orange .value { color: #c8912a; }
+
+  .gantt-wrap { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); margin-bottom: 24px; }
+  .gantt-wrap h2 { font-size: 14px; color: #1F3864; margin-bottom: 16px; font-weight: 700; }
+  .gantt-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .gantt-table th { background: #2E5FA3; color: white; padding: 8px 6px; text-align: center; font-weight: 600; }
+  .gantt-table th.left { text-align: left; padding-left: 12px; }
+  .gantt-table td { padding: 6px; border-bottom: 1px solid #e8ecf0; }
+  .gantt-table tr:last-child td { border-bottom: none; }
+  .gantt-table tr:nth-child(even) td { background: #f7f9fc; }
+  .gantt-bar { background: #2E5FA3; color: white; text-align: center; border-radius: 4px; padding: 4px 0; font-size: 11px; font-weight: 600; }
+
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+  .badge.not-started { background: #f0f0f0; color: #666; }
+  .badge.in-progress { background: #fff3cd; color: #856404; }
+  .badge.completed { background: #d4edda; color: #155724; }
+
+  .detail-wrap { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+  .detail-wrap h2 { font-size: 14px; color: #1F3864; margin-bottom: 12px; font-weight: 700; }
+
+  .steps-legend { background: #f0f4ff; border: 1px solid #c8d8f0; border-radius: 8px; padding: 14px 18px; margin-bottom: 16px; }
+  .steps-legend-title { font-weight: 700; color: #1F3864; margin-bottom: 10px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.4px; }
+  .steps-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .step-pill { display: flex; align-items: flex-start; gap: 8px; background: white; border: 1px solid #dde6f5; border-radius: 6px; padding: 8px 10px; font-size: 11px; line-height: 1.4; }
+  .step-pill .snum { background: #2E5FA3; color: white; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+
+  .filters { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  .filters select, .filters input { border: 1px solid #ddd; border-radius: 6px; padding: 7px 12px; font-size: 12px; color: #333; background: white; }
+
+  .detail-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .detail-table th { background: #2E5FA3; color: white; padding: 10px 8px; text-align: center; font-weight: 600; white-space: nowrap; }
+  .detail-table th.left { text-align: left; padding-left: 12px; }
+  .detail-table td { padding: 8px; border-bottom: 1px solid #eef0f3; vertical-align: middle; text-align: center; }
+  .detail-table td.left { text-align: left; }
+  .detail-table tr:hover td { background: #f0f4ff; }
+  .detail-table tr:nth-child(even) td { background: #f7f9fc; }
+  .detail-table tr:nth-child(even):hover td { background: #f0f4ff; }
+
+  .region-tag { display: inline-block; background: #e8eef8; color: #2E5FA3; padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 11px; }
+
+  .step-check { font-size: 15px; user-select: none; transition: opacity 0.2s; }
+  .step-check.editable { cursor: pointer; }
+  .step-check.locked { cursor: not-allowed; opacity: 0.5; }
+  .step-check.done { color: #70AD47; opacity: 1; }
+
+  .prog-wrap { background: #eef0f3; border-radius: 4px; height: 6px; width: 70px; display: inline-block; vertical-align: middle; }
+  .prog-bar { height: 6px; border-radius: 4px; background: #2E5FA3; transition: width 0.3s; }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* SAVING INDICATOR */
+  .save-indicator {
+    position: fixed; bottom: 20px; right: 24px;
+    background: #1F3864; color: white; padding: 8px 16px;
+    border-radius: 20px; font-size: 12px; font-weight: 600;
+    opacity: 0; transition: opacity 0.3s; pointer-events: none;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+  }
+  .save-indicator.visible { opacity: 1; }
+
+  /* PIN MODAL */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: white; border-radius: 14px; padding: 32px; width: 360px; box-shadow: 0 8px 40px rgba(0,0,0,0.25); text-align: center; }
+  .modal .lock-big { font-size: 40px; margin-bottom: 12px; }
+  .modal h3 { font-size: 16px; color: #1F3864; margin-bottom: 6px; font-weight: 700; }
+  .modal p { font-size: 12px; color: #888; margin-bottom: 20px; }
+  .pin-input {
+    width: 100%; border: 2px solid #ddd; border-radius: 8px;
+    padding: 12px 16px; font-size: 16px; text-align: center;
+    letter-spacing: 3px; margin-bottom: 8px; font-family: Arial, sans-serif;
+    transition: border-color 0.2s;
+  }
+  .pin-input:focus { outline: none; border-color: #2E5FA3; }
+  .pin-input.error { border-color: #C00000; animation: shake 0.3s; }
+  .pin-error { color: #C00000; font-size: 12px; height: 16px; margin-bottom: 12px; }
+  .modal-btns { display: flex; gap: 10px; }
+  .btn { padding: 10px 0; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; border: none; flex: 1; }
+  .btn-primary { background: #2E5FA3; color: white; }
+  .btn-primary:hover { background: #1F3864; }
+  .btn-secondary { background: #f0f0f0; color: #666; }
+
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+  }
+
+  /* LOADING OVERLAY */
+  .loading-overlay {
+    position: fixed; inset: 0; background: #f0f4f8;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 200; transition: opacity 0.4s;
+  }
+  .loading-overlay.hidden { opacity: 0; pointer-events: none; }
+  .loading-spinner {
+    width: 36px; height: 36px; border: 3px solid #dde6f5;
+    border-top-color: #2E5FA3; border-radius: 50%;
+    animation: spin 0.8s linear infinite; margin-bottom: 14px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCsEXFHj83mhlXsn-bN-MAGTYdBR0X6sUI",
+      authDomain: "izi-tracker-6d69a.firebaseapp.com",
+      projectId: "izi-tracker-6d69a",
+      storageBucket: "izi-tracker-6d69a.firebasestorage.app",
+      messagingSenderId: "265890994822",
+      appId: "1:265890994822:web:903ffa84cfa1278dbb0f07"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const DOC_REF = doc(db, 'tracker', 'state');
+
+    window.firebaseLoad = async function() {
+      try {
+        const snap = await getDoc(DOC_REF);
+        if (snap.exists()) return snap.data();
+      } catch(e) { console.warn('Firebase load failed:', e); }
+      return null;
+    };
+
+    window.firebaseSave = async function(data) {
+      try {
+        await setDoc(DOC_REF, data);
+        return true;
+      } catch(e) { console.warn('Firebase save failed:', e); return false; }
+    };
+
+    window.firebaseReady = true;
+  </script>
 </head>
 <body>
-<div class="wrap">
-  <div class="header">
-    <span class="title">Project timeline</span>
-    <span class="subtitle">01/04/2026 — 31/12/2026</span>
+
+<div class="loading-overlay" id="loading-overlay">
+  <div class="loading-spinner"></div>
+  <div style="font-size:13px;color:#2E5FA3;font-weight:600">Loading tracker…</div>
+</div>
+
+<header>
+  <div>
+    <h1 id="h-title">IZI Safety — User Profile Harmonization</h1>
+    <span id="h-sub">Planning Tracker | Schedule: 01/04/2026 – 31/12/2026</span>
   </div>
-  <div class="chart" id="chart">
-    <div class="month-row" id="month-row"></div>
-    <div id="phases"></div>
-    <div class="footer">
-      <span class="date-label">April 2026</span>
-      <span class="date-label">December 2026</span>
+  <div class="header-right">
+    <div class="lock-indicator" id="lock-indicator">
+      <span class="lock-icon">🔒</span>
+      <span id="lock-label">View only</span>
+    </div>
+    <div style="text-align:right;font-size:12px;opacity:0.8" id="h-meta">45 subsidiaries · 8 regions · 9 months</div>
+    <div class="lang-toggle">
+      <button class="lang-btn" onclick="setLang('fr')">FR</button>
+      <button class="lang-btn active" onclick="setLang('en')">EN</button>
+    </div>
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('summary')" id="tab-btn-summary">Overview</div>
+  <div class="tab" onclick="switchTab('detail')" id="tab-btn-detail">Subsidiary Detail</div>
+</div>
+
+<div class="container">
+
+  <div class="tab-panel active" id="tab-summary">
+    <div class="cards">
+      <div class="card"><div class="label" id="card-total-lbl">Total Subsidiaries</div><div class="value">45</div></div>
+      <div class="card green"><div class="label" id="card-done-lbl">Completed</div><div class="value" id="cnt-done">0</div></div>
+      <div class="card orange"><div class="label" id="card-prog-lbl">In Progress</div><div class="value" id="cnt-progress">0</div></div>
+      <div class="card"><div class="label" id="card-pend-lbl">Not Started</div><div class="value" id="cnt-pending">45</div></div>
+    </div>
+    <div class="gantt-wrap">
+      <h2 id="gantt-title">General Schedule – Gantt View by Region</h2>
+      <table class="gantt-table">
+        <thead>
+          <tr>
+            <th class="left" style="width:130px" id="gh-region">Region</th>
+            <th style="width:50px" id="gh-subs"># Subs.</th>
+            <th id="gh-m0">Apr.</th><th id="gh-m1">May</th><th id="gh-m2">Jun.</th><th id="gh-m3">Jul.</th>
+            <th id="gh-m4">Aug.</th><th id="gh-m5">Sep.</th><th id="gh-m6">Oct.</th><th id="gh-m7">Nov.</th><th id="gh-m8">Dec.</th>
+            <th style="width:110px" id="gh-status">Progress</th>
+          </tr>
+        </thead>
+        <tbody id="gantt-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="tab-detail">
+    <div class="detail-wrap">
+      <h2 id="detail-title">Detailed Tracking by Subsidiary</h2>
+      <div class="steps-legend">
+        <div class="steps-legend-title" id="legend-title">Tracked Steps</div>
+        <div class="steps-grid" id="steps-legend-grid"></div>
+      </div>
+      <div class="filters">
+        <select id="filter-region" onchange="renderDetail()"></select>
+        <input type="text" id="filter-search" oninput="renderDetail()">
+        <select id="filter-status" onchange="renderDetail()"></select>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="detail-table">
+          <thead><tr id="detail-head"></tr></thead>
+          <tbody id="detail-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="save-indicator" id="save-indicator">✓ Saved</div>
+
+<!-- PIN MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="lock-big">🔐</div>
+    <h3 id="modal-title">Admin Access</h3>
+    <p id="modal-desc">Enter your PIN to unlock editing.</p>
+    <input type="password" class="pin-input" id="pin-input" maxlength="30" onkeydown="if(event.key==='Enter')submitPin()">
+    <div class="pin-error" id="pin-error"></div>
+    <div class="modal-btns">
+      <button class="btn btn-secondary" onclick="closeModal()" id="modal-cancel">Cancel</button>
+      <button class="btn btn-primary" onclick="submitPin()" id="modal-confirm">Unlock</button>
     </div>
   </div>
 </div>
 
-<div class="tooltip" id="tooltip">
-  <div class="t-name" id="tt-name"></div>
-  <div class="t-detail" id="tt-detail"></div>
-  <div class="t-desc" id="tt-desc"></div>
-</div>
-
 <script>
-const months = ['Avril','Mai','Juin','Juillet','Août','Sept.','Oct.','Nov','Déc.'];
-const TOTAL = 9;
-
-// ✏️ EDIT HERE — fill in the desc field for each phase
-const phases = [
-  { name: 'AFR/AFO (8)',  start: 0,    dur: 1.5, weeks: 5,  color: '#939DA8', desc: 'Ghana, Togo, Guinée Conakry, Cameroun, Sénégal, Côte d’ivoire, Gabon, Guinée Equatoriale' },
+// ── REGIONS ──────────────────────────────────────────────────
+const REGIONS = [
+    { name: 'AFR/AFO (8)',  start: 0,    dur: 1.5, weeks: 5,  color: '#939DA8', desc: 'Ghana, Togo, Guinée Conakry, Cameroun, Sénégal, Côte d’ivoire, Gabon, Guinée Equatoriale' },
   { name: 'AFR/MOI (8)',  start: 1.45,    dur: 1.5,    weeks: 5,  color: '#939DA8', desc: 'Tunisie, Maurice, Maroc, Algérie, Egypte, Ethiopie, Madagascar, Mozambique' },
   { name: 'AFR/NG (1)',   start: 2.80,    dur: 0.62, weeks: 0.62,  color: '#939DA8', desc: 'Nigéria' },
   { name: 'AFR/ACE (8)',  start: 3.25,  dur: 1.5,    weeks: 5,  color: '#939DA8', desc: 'Malawi, Zambie, RDC, Congo, Ouganda, Kenya, Tanzanie, Zimbabwe' },
@@ -114,65 +292,410 @@ const phases = [
   { name: 'LUB (6)',  start: 7.85,  dur: 1.15,  weeks: 3.75,  color: '#939DA8', desc: 'Argentine, Brésil, Chili, Mexique, TEAFS, États-Unis' },
 ];
 
-const monthRow = document.getElementById('month-row');
-months.forEach(m => {
-  const cell = document.createElement('div');
-  cell.className = 'month-cell';
-  cell.textContent = m;
-  monthRow.appendChild(cell);
-});
+const STEPS = [
+  { num:1, key:'s1', labelEN:'Step 1', labelFR:'Étape 1', descEN:'Initial communication to subsidiary',                        descFR:'Communication initiale à la filiale' },
+  { num:2, key:'s2', labelEN:'Step 2', labelFR:'Étape 2', descEN:'Gap analysis: harmonized vs operational matrix',              descFR:'Analyse comparative matrice harmonisée vs opérationnelle' },
+  { num:3, key:'s3', labelEN:'Step 3', labelFR:'Étape 3', descEN:'Review meeting with subsidiary administrators',                descFR:'Réunion de revue avec les administrateurs' },
+  { num:4, key:'s4', labelEN:'Step 4', labelFR:'Étape 4', descEN:'Communication to contractors (IZI Safety support informed)',  descFR:'Communication aux contractants (support IZI informé)' },
+  { num:5, key:'s5', labelEN:'Step 5', labelFR:'Étape 5', descEN:'Effective update of user profiles on the platform',           descFR:'Mise à jour effective des profils sur la plateforme' },
+  { num:6, key:'s6', labelEN:'Step 6', labelFR:'Étape 6', descEN:'Project closure communication to admins and contractors',     descFR:'Communication de clôture auprès des admins et contractants' },
+  { num:7, key:'s7', labelEN:'Step 7', labelFR:'Étape 7', descEN:'Post-deployment support and impact analysis',                 descFR:'Accompagnement post-déploiement et analyse d\'impact' },
+];
 
-const container = document.getElementById('phases');
-const tooltip = document.getElementById('tooltip');
+// ── AUTH ─────────────────────────────────────────────────────
+// Hidden shortcut: Ctrl + Shift + A
+const PIN_HASH = '8f3d2b1a9e6c4f7d2a5b8e1d4c7f0a3b6e9d2c5f8a1b4e7d0c3f6a9b2e5d8c1'; // salted hash placeholder
+const CORRECT_PIN = 'Izisafety26$';
+let isUnlocked = false;
+let keyBuffer = [];
 
-phases.forEach(p => {
-  const row = document.createElement('div');
-  row.className = 'phase-row';
+// ── STATE ────────────────────────────────────────────────────
+const state = {};
+REGIONS.forEach(r => r.subs.forEach(s => {
+  state[`${r.name}|${s}`] = {};
+  STEPS.forEach(st => state[`${r.name}|${s}`][st.key] = false);
+}));
 
-  const area = document.createElement('div');
-  area.className = 'bar-area';
-
-  for (let i = 0; i <= TOTAL; i++) {
-    const gl = document.createElement('div');
-    gl.className = 'grid-line';
-    gl.style.left = (i / TOTAL * 100) + '%';
-    area.appendChild(gl);
+// ── LANGUAGE ─────────────────────────────────────────────────
+let lang = 'en';
+const T = {
+  en: {
+    hTitle:'IZI Safety — User Profile Harmonization', hSub:'Planning Tracker | Schedule: 01/04/2026 – 31/12/2026', hMeta:'45 subsidiaries · 8 regions · 9 months',
+    tabOverview:'Overview', tabDetail:'Subsidiary Detail',
+    cardTotal:'Total Subsidiaries', cardDone:'Completed', cardProg:'In Progress', cardPend:'Not Started',
+    ganttTitle:'General Schedule – Gantt View by Region',
+    ghRegion:'Region', ghSubs:'# Subs.', ghStatus:'Progress',
+    months:['Apr.','May','Jun.','Jul.','Aug.','Sep.','Oct.','Nov.','Dec.'],
+    monthsFull:['April','May','June','July','August','September','October','November','December'],
+    detailTitle:'Detailed Tracking by Subsidiary',
+    legendTitle:'Tracked Steps',
+    filterAllRegions:'All regions', filterSearch:'Search subsidiary…',
+    filterAllStatus:'All statuses', filterNotStarted:'Not started', filterInProgress:'In progress', filterCompleted:'Completed',
+    thRegion:'Region', thSub:'Subsidiary', thPeriod:'Period', thProgress:'Progress', thStatus:'Status',
+    badgeNotStarted:'Not started', badgeInProgress:'In progress', badgeCompleted:'Completed',
+    lockLabel:'View only', unlockLabel:'Editing unlocked',
+    modalTitle:'Admin Access', modalDesc:'Enter your PIN to unlock editing.',
+    modalCancel:'Cancel', modalConfirm:'Unlock',
+    pinWrong:'Incorrect PIN. Try again.', saving:'Saving…', saved:'✓ Saved', savedLocal:'✓ Saved locally',
+    lockedTip:'Unlock editing to interact',
+  },
+  fr: {
+    hTitle:'IZI Safety — Harmonisation des Profils Utilisateurs', hSub:'Planning Tracker | Calendrier : 01/04/2026 – 31/12/2026', hMeta:'45 filiales · 8 régions · 9 mois',
+    tabOverview:'Vue Générale', tabDetail:'Détail par Filiale',
+    cardTotal:'Total Filiales', cardDone:'Complétées', cardProg:'En cours', cardPend:'Non démarrées',
+    ganttTitle:'Planning Général – Vue Gantt par Région',
+    ghRegion:'Région', ghSubs:'# Fil.', ghStatus:'Avancement',
+    months:['Avr.','Mai','Juin','Juil.','Août','Sept.','Oct.','Nov.','Déc.'],
+    monthsFull:['Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'],
+    detailTitle:'Suivi Détaillé par Filiale',
+    legendTitle:'Étapes suivies',
+    filterAllRegions:'Toutes les régions', filterSearch:'Rechercher une filiale…',
+    filterAllStatus:'Tous les statuts', filterNotStarted:'Non démarré', filterInProgress:'En cours', filterCompleted:'Complété',
+    thRegion:'Région', thSub:'Filiale', thPeriod:'Période', thProgress:'Progression', thStatus:'Statut',
+    badgeNotStarted:'Non démarré', badgeInProgress:'En cours', badgeCompleted:'Complété',
+    lockLabel:'Lecture seule', unlockLabel:'Édition déverrouillée',
+    modalTitle:'Accès administrateur', modalDesc:'Entrez votre PIN pour déverrouiller l\'édition.',
+    modalCancel:'Annuler', modalConfirm:'Déverrouiller',
+    pinWrong:'PIN incorrect. Réessayez.', saving:'Enregistrement…', saved:'✓ Enregistré', savedLocal:'✓ Enregistré localement',
+    lockedTip:'Déverrouiller pour interagir',
   }
+};
+function t(k) { return T[lang][k] || k; }
 
-  const bar = document.createElement('div');
-  bar.className = 'bar';
-  bar.style.left = (p.start / TOTAL * 100) + '%';
-  bar.style.width = (p.dur / TOTAL * 100) + '%';
-  bar.style.background = p.color;
+// ── STORAGE (Firebase Firestore) ─────────────────────────────
+const STORAGE_KEY = 'izi_tracker_state_v1';
+let saveTimer = null;
 
-  const label = document.createElement('span');
-  label.textContent = p.name;
-
-  const wk = document.createElement('span');
-  wk.className = 'weeks';
-  wk.textContent = p.weeks + 'w';
-
-  bar.appendChild(label);
-  if (p.dur >= 1) bar.appendChild(wk);
-
-  area.appendChild(bar);
-  row.appendChild(area);
-  container.appendChild(row);
-
-  row.addEventListener('mouseenter', () => {
-    const startMonth = months[Math.floor(p.start)];
-    const endMonth = months[Math.min(Math.floor(p.start + p.dur), TOTAL - 1)];
-    document.getElementById('tt-name').textContent = p.name;
-    document.getElementById('tt-detail').textContent = `${startMonth} → ${endMonth}  ·  ${p.weeks} weeks`;
-    document.getElementById('tt-desc').textContent = p.desc || '';
-    tooltip.classList.add('show');
+// Wait for Firebase module to be ready
+function waitForFirebase(timeout = 5000) {
+  return new Promise((resolve) => {
+    if (window.firebaseReady) { resolve(true); return; }
+    const start = Date.now();
+    const check = setInterval(() => {
+      if (window.firebaseReady) { clearInterval(check); resolve(true); }
+      else if (Date.now() - start > timeout) { clearInterval(check); resolve(false); }
+    }, 50);
   });
-  row.addEventListener('mousemove', (e) => {
-    tooltip.style.left = (e.clientX + 14) + 'px';
-    tooltip.style.top = (e.clientY - 10) + 'px';
-  });
-  row.addEventListener('mouseleave', () => tooltip.classList.remove('show'));
+}
+
+async function loadFromStorage() {
+  const ready = await waitForFirebase();
+  if (ready && window.firebaseLoad) {
+    const data = await window.firebaseLoad();
+    if (data) { applyStateFromObj(data); return; }
+  }
+  // localStorage fallback
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) applyStateFromObj(JSON.parse(raw));
+  } catch(e) {}
+}
+
+function applyStateFromObj(saved) {
+  try {
+    Object.keys(saved).forEach(k => {
+      if (state[k]) {
+        STEPS.forEach(s => {
+          if (saved[k] && saved[k][s.key] !== undefined) state[k][s.key] = saved[k][s.key];
+        });
+      }
+    });
+  } catch(e) {}
+}
+
+async function saveToStorage() {
+  // Flatten state to plain object for Firestore
+  const data = {};
+  Object.keys(state).forEach(k => { data[k] = Object.assign({}, state[k]); });
+
+  let savedRemote = false;
+  const ready = await waitForFirebase(3000);
+  if (ready && window.firebaseSave) {
+    savedRemote = await window.firebaseSave(data);
+  }
+  // Always backup locally
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
+  showSaveIndicator(savedRemote ? t('saved') : t('savedLocal'));
+}
+
+function scheduleSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveToStorage, 800);
+}
+
+let saveHideTimer = null;
+function showSaveIndicator(msg) {
+  const el = document.getElementById('save-indicator');
+  el.textContent = msg;
+  el.classList.add('visible');
+  clearTimeout(saveHideTimer);
+  if (msg.startsWith('✓')) {
+    saveHideTimer = setTimeout(() => el.classList.remove('visible'), 2000);
+  }
+}
+
+// ── PIN / UNLOCK ─────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  // Ctrl + Shift + A triggers PIN prompt
+  if (e.ctrlKey && e.shiftKey && e.key === 'A') {
+    e.preventDefault();
+    if (!isUnlocked) openModal();
+    else lockSession();
+  }
 });
+
+function openModal() {
+  document.getElementById('modal-overlay').classList.add('open');
+  document.getElementById('pin-input').value = '';
+  document.getElementById('pin-error').textContent = '';
+  document.getElementById('pin-input').classList.remove('error');
+  setTimeout(() => document.getElementById('pin-input').focus(), 100);
+  // Apply current lang to modal
+  document.getElementById('modal-title').textContent = t('modalTitle');
+  document.getElementById('modal-desc').textContent = t('modalDesc');
+  document.getElementById('modal-cancel').textContent = t('modalCancel');
+  document.getElementById('modal-confirm').textContent = t('modalConfirm');
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+
+function submitPin() {
+  const input = document.getElementById('pin-input').value;
+  if (input === CORRECT_PIN) {
+    isUnlocked = true;
+    closeModal();
+    updateLockUI();
+    renderDetail();
+  } else {
+    const inp = document.getElementById('pin-input');
+    inp.classList.add('error');
+    document.getElementById('pin-error').textContent = t('pinWrong');
+    inp.value = '';
+    setTimeout(() => inp.classList.remove('error'), 400);
+  }
+}
+
+function lockSession() {
+  isUnlocked = false;
+  updateLockUI();
+  renderDetail();
+}
+
+function updateLockUI() {
+  const ind = document.getElementById('lock-indicator');
+  const lbl = document.getElementById('lock-label');
+  if (isUnlocked) {
+    ind.classList.add('unlocked');
+    lbl.textContent = t('unlockLabel');
+  } else {
+    ind.classList.remove('unlocked');
+    lbl.textContent = t('lockLabel');
+  }
+}
+
+// ── RENDER ───────────────────────────────────────────────────
+function getStatus(stepMap) {
+  const done = STEPS.filter(s => stepMap[s.key]).length;
+  if (done === 0) return 'not-started';
+  if (done === STEPS.length) return 'completed';
+  return 'in-progress';
+}
+
+function statusBadge(st) {
+  const map = {'not-started':'badgeNotStarted','in-progress':'badgeInProgress','completed':'badgeCompleted'};
+  return `<span class="badge ${st}">${t(map[st])}</span>`;
+}
+
+function updateCards() {
+  let done=0, prog=0, pend=0;
+  Object.values(state).forEach(m => {
+    const s = getStatus(m);
+    if(s==='completed') done++; else if(s==='in-progress') prog++; else pend++;
+  });
+  document.getElementById('cnt-done').textContent = done;
+  document.getElementById('cnt-progress').textContent = prog;
+  document.getElementById('cnt-pending').textContent = pend;
+}
+
+function renderGantt() {
+  const tbody = document.getElementById('gantt-body');
+  tbody.innerHTML = '';
+  REGIONS.forEach(r => {
+    const tr = document.createElement('tr');
+    let cells = `<td style="font-weight:700;color:#1F3864;padding-left:12px">${r.name}</td>`;
+    cells += `<td style="text-align:center">${r.count}</td>`;
+    for (let m=0; m<9; m++) {
+      if (m >= r.start && m <= r.end) {
+        if (m === r.start) {
+          const span = r.end - r.start + 1;
+          cells += `<td colspan="${span}"><div class="gantt-bar">${r.name}</div></td>`;
+          m = r.end;
+        }
+      } else { cells += `<td></td>`; }
+    }
+    let done=0;
+    r.subs.forEach(s => { if(getStatus(state[`${r.name}|${s}`])==='completed') done++; });
+    const pct = Math.round(done/r.count*100);
+    cells += `<td style="text-align:center">
+      <div style="font-size:11px;color:#555;margin-bottom:3px">${done}/${r.count}</div>
+      <div class="prog-wrap"><div class="prog-bar" style="width:${pct}%"></div></div>
+    </td>`;
+    tr.innerHTML = cells;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderStepsLegend() {
+  const grid = document.getElementById('steps-legend-grid');
+  grid.innerHTML = '';
+  STEPS.forEach(s => {
+    const div = document.createElement('div');
+    div.className = 'step-pill';
+    div.title = lang==='en' ? s.descEN : s.descFR;
+    div.innerHTML = `<div class="snum">${s.num}</div><div><strong>${lang==='en'?s.labelEN:s.labelFR}</strong><br><span style="color:#555;font-size:10px">${lang==='en'?s.descEN:s.descFR}</span></div>`;
+    grid.appendChild(div);
+  });
+}
+
+function renderDetailHeader() {
+  const tr = document.getElementById('detail-head');
+  tr.innerHTML = `
+    <th class="left">${t('thRegion')}</th>
+    <th class="left">${t('thSub')}</th>
+    <th>${t('thPeriod')}</th>
+    ${STEPS.map(s=>`<th title="${lang==='en'?s.descEN:s.descFR}">${lang==='en'?s.labelEN:s.labelFR}</th>`).join('')}
+    <th>${t('thProgress')}</th>
+    <th>${t('thStatus')}</th>
+  `;
+}
+
+function renderDetail() {
+  const filterRegion = document.getElementById('filter-region').value;
+  const filterSearch = document.getElementById('filter-search').value.toLowerCase();
+  const filterStatus = document.getElementById('filter-status').value;
+  const mf = t('monthsFull');
+  const tbody = document.getElementById('detail-body');
+  tbody.innerHTML = '';
+
+  REGIONS.forEach(r => {
+    if (filterRegion && filterRegion !== r.name) return;
+    r.subs.forEach(sub => {
+      if (filterSearch && !sub.toLowerCase().includes(filterSearch)) return;
+      const key = `${r.name}|${sub}`;
+      const stepMap = state[key];
+      const st = getStatus(stepMap);
+      if (filterStatus && filterStatus !== st) return;
+      const done = STEPS.filter(s => stepMap[s.key]).length;
+      const pct = Math.round(done/STEPS.length*100);
+      const period = r.start !== r.end ? `${mf[r.start]} – ${mf[r.end]}` : mf[r.start];
+
+      const tr = document.createElement('tr');
+      const stepCells = STEPS.map(s => {
+        if (isUnlocked) {
+          return `<td class="step-check editable ${stepMap[s.key]?'done':''}"
+                    onclick="toggleStep('${key}','${s.key}')"
+                    title="${stepMap[s.key]?'Done – click to undo':'Click to mark done'}">
+                    ${stepMap[s.key]?'✅':'⬜'}
+                  </td>`;
+        } else {
+          return `<td class="step-check locked ${stepMap[s.key]?'done':''}"
+                    title="${t('lockedTip')}">
+                    ${stepMap[s.key]?'✅':'⬜'}
+                  </td>`;
+        }
+      }).join('');
+
+      tr.innerHTML = `
+        <td class="left"><span class="region-tag">${r.name}</span></td>
+        <td class="left" style="font-weight:600">${sub}</td>
+        <td style="color:#555;white-space:nowrap;font-size:11px">${period}</td>
+        ${stepCells}
+        <td>
+          <div style="display:flex;align-items:center;gap:8px;justify-content:center">
+            <div class="prog-wrap"><div class="prog-bar" style="width:${pct}%"></div></div>
+            <span style="font-size:11px;color:#555">${pct}%</span>
+          </div>
+        </td>
+        <td>${statusBadge(st)}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  });
+}
+
+function toggleStep(key, stepKey) {
+  if (!isUnlocked) return;
+  state[key][stepKey] = !state[key][stepKey];
+  renderAll();
+  scheduleSave();
+}
+
+function renderAll() {
+  updateCards();
+  renderGantt();
+  renderStepsLegend();
+  renderDetailHeader();
+  renderDetail();
+  updateLockUI();
+}
+
+function setLang(l) {
+  lang = l;
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.textContent.trim()===l.toUpperCase()));
+  applyLang();
+  initFilters();
+  renderAll();
+}
+
+function applyLang() {
+  const ids = {
+    'h-title':'hTitle','h-sub':'hSub','h-meta':'hMeta',
+    'tab-btn-summary':'tabOverview','tab-btn-detail':'tabDetail',
+    'card-total-lbl':'cardTotal','card-done-lbl':'cardDone','card-prog-lbl':'cardProg','card-pend-lbl':'cardPend',
+    'gantt-title':'ganttTitle','gh-region':'ghRegion','gh-subs':'ghSubs','gh-status':'ghStatus',
+    'detail-title':'detailTitle','legend-title':'legendTitle',
+  };
+  Object.entries(ids).forEach(([id,k]) => { const el=document.getElementById(id); if(el) el.textContent=t(k); });
+  document.getElementById('filter-search').placeholder = t('filterSearch');
+  t('months').forEach((m,i) => { const el=document.getElementById(`gh-m${i}`); if(el) el.textContent=m; });
+  updateLockUI();
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((tb,i) => tb.classList.toggle('active', ['summary','detail'][i]===tab));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id===`tab-${tab}`));
+}
+
+function initFilters() {
+  const fr = document.getElementById('filter-region');
+  const curR = fr.value;
+  fr.innerHTML = `<option value="">${t('filterAllRegions')}</option>`;
+  REGIONS.forEach(r => { const o=document.createElement('option'); o.value=r.name; o.textContent=r.name; fr.appendChild(o); });
+  fr.value = curR;
+
+  const fs = document.getElementById('filter-status');
+  const curS = fs.value;
+  fs.innerHTML = `
+    <option value="">${t('filterAllStatus')}</option>
+    <option value="not-started">${t('filterNotStarted')}</option>
+    <option value="in-progress">${t('filterInProgress')}</option>
+    <option value="completed">${t('filterCompleted')}</option>
+  `;
+  fs.value = curS;
+}
+
+// ── INIT ─────────────────────────────────────────────────────
+async function init() {
+  await loadFromStorage();
+  applyLang();
+  initFilters();
+  renderAll();
+  document.getElementById('loading-overlay').classList.add('hidden');
+}
+
+init();
 </script>
 </body>
 </html>
